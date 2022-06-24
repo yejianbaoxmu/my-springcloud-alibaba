@@ -1,0 +1,41 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+nacos:
+  url: ${NACOS_URL:127.0.0.1:8848}
+spring:
+  application:
+    name: storage
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos.url}
+        enabled: true
+        failure-tolerance-enabled: true
+      config:
+        enabled: true
+        server-addr: ${nacos.url}
+        file-extension: yaml
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8123
+      datasource:
+        ds1:
+          nacos:
+            server-addr: ${nacos.url}
+            data-id: sentinel
+            group-id: DEFAULT_GROUP
+            data-type: json
+            rule-type: flow
+  config:
+    import:
+      - classpath:/application-db.yml
+      - optional:nacos:storage.yml
+      - optional:nacos:storage-db.yml
+server:
+  port: 8082
+feign:
+  sentinel:
+    enabled: true

@@ -1,0 +1,24 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+spring:
+  application:
+    name: account
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        enabled: true
+        failure-tolerance-enabled: true
+      config:
+        enabled: true
+        server-addr: 127.0.0.1:8848
+        file-extension: yaml
+  config:
+    import:
+      - optional:nacos:account.yml
+      - optional:nacos:account-db.yml
+server:
+  port: 8083

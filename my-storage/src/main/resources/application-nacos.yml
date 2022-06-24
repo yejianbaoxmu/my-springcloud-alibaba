@@ -1,0 +1,6 @@
+#这里是将需要在nacos内部进行配置的提取出来，这里面的上传到nacos，然后应用下载覆盖到应用配置里面，下面的配置都是随时可能更改的
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8123

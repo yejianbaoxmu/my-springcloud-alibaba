@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: storage
+  template: # 根据此模板创建Pod的副本
+    metadata:
+      labels: # Pod副本拥有的标签
+        app: storage
+    spec:
+      volumes:
+        - name: skywalking-agent
+          emptyDir: { }
+      initContainers:
+        - name: agent-container
+          image: apache/skywalking-java-agent:8.11.0-java11
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /agent
+          command:
+            - '/bin/sh'
+            - '-c'
+            - 'cp -R /skywalking/agent/* /agent/'
+      containers:
+        - name: my-storage
+          image: hub.anicert.cn/library/my-storage:1.0.3
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /skywalking/agent
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/skywalking/agent/skywalking-agent.jar"
+            - name: SW_AGENT_NAME
+              value: "storage"
+          #env已经由env-storage.yml在k8s创建configMap了
+          envFrom:
+            - configMapRef:
+                name: nacos-config
+            - configMapRef:
+                name: skywalking-config
+          ports:
+            - containerPort: 8082
+          readinessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              port: 8082
+              path: /storage/status
+            initialDelaySeconds: 150
+            periodSeconds: 60
+            timeoutSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-svc
+spec:
+  type: ClusterIP
+  selector:
+    app: storage
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
+
+
+

@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-storage
+  namespace: default
+  labels:
+    app: my-storage
+    version: v1
+spec:
+  volumes:
+    - name: skywalking-agent
+      emptyDir: { }
+  initContainers:
+    - name: agent-container
+      image: apache/skywalking-java-agent:8.11.0-java11
+      volumeMounts:
+        - name: skywalking-agent
+          mountPath: /agent
+      command:
+        - '/bin/sh'
+        - '-c'
+        - 'set -ex;mkdir -p /agent/;cp -R /skywalking/agent/* /agent/'
+  containers:
+    - name: storage
+      image: hub.anicert.cn/library/my-storage:1.0.1
+      imagePullPolicy: IfNotPresent
+      volumeMounts:
+        - name: skywalking-agent
+          mountPath: /skywalking
+      env:
+        - name: JAVA_TOOL_OPTIONS
+          value: "-javaagent:/skywalking/agent/skywalking-agent.jar"
+        - name: SW_AGENT_NAME
+          value: "storage"
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: 192.168.8.55:11800
+      readinessProbe:
+        tcpSocket:
+          host: 192.168.8.89
+          port: 8848
+        initialDelaySeconds: 1
+        periodSeconds: 3
+        timeoutSeconds: 5
+      livenessProbe:
+        httpGet:
+          port: 8082
+          path: /storage/status
+        initialDelaySeconds: 150
+        periodSeconds: 60
+        timeoutSeconds: 5

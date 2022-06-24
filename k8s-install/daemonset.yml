@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: example-daemonset
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: example-daemonset
+  template:
+    metadata:
+      labels:
+        app: example-daemonset
+    spec:
+      containers:
+        - name: daemonset-container
+          image: nginx
+
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: example-job
+  namespace: default
+spec:
+  completions: 1 #Job运行成功默认需要成功运行的Pod的个数，默认为1
+  template:
+    metadata:
+      name: example-job
+    spec:
+      containers:
+        - name: job-container
+          image: nginx
+      restartPolicy: Never
+
+---
+kind: CronJob
+apiVersion: batch/v1
+metadata:
+  name: example-cronjob
+  namespace: default
+spec:
+  schedule: "*/1 * * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: job-container
+              image: nginx
+          restartPolicy: Never

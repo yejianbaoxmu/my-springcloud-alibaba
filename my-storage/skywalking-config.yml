@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: skywalking-config
+  namespace: default
+data:
+  SW_AGENT_COLLECTOR_BACKEND_SERVICES: 192.168.8.55:11800

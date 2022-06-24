@@ -1,0 +1,33 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+nacos:
+  url: 127.0.0.1:8848
+spring:
+  application:
+    name: gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${nacos.url}
+        enabled: true
+        failure-tolerance-enabled: true
+      config:
+        enabled: true
+        server-addr: ${nacos.url}
+        file-extension: yaml
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8123
+  config:
+    import:
+      - classpath:/application-db.yml
+      - optional:nacos:gateway.yml
+      - optional:nacos:gateway-db.yml
+server:
+  port: 8090
+feign:
+  sentinel:
+    enabled: true

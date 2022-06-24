@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order
+  template: # 根据此模板创建Pod的副本
+    metadata:
+      labels: # Pod副本拥有的标签
+        app: order
+    spec:
+      volumes:
+        - name: skywalking-agent
+          emptyDir: { }
+      initContainers:
+        - name: agent-container
+          image: apache/skywalking-java-agent:8.11.0-java11
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /agent
+          command: [ "/bin/sh" ]
+          args: [ "-c", "cp -R /skywalking/agent/* /agent/" ]
+        - name: init-order
+          image: busybox
+          command: [ 'sh','-c','until nslookup storage-svc; do echo waiting for storage-svc; sleep 2;done;' ]
+      containers:
+        - name: my-order
+          image: hub.anicert.cn/library/my-order:1.0.2
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - name: skywalking-agent
+              mountPath: /skywalking/agent
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-javaagent:/skywalking/agent/skywalking-agent.jar"
+            - name: SW_AGENT_NAME
+              value: "order"
+          envFrom:
+            - configMapRef:
+                name: nacos-config
+            - configMapRef:
+                name: skywalking-config
+          ports:
+            - containerPort: 8081
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              port: 8081
+              path: /order/status
+            initialDelaySeconds: 120
+            periodSeconds: 60
+            timeoutSeconds: 5
+
+
+
+

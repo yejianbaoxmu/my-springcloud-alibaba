@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: env-pod
+  namespace: default
+  labels:
+    app: env-pod
+    version: v1
+spec:
+  containers:
+    - name: env-container
+      image: busybox
+      command: ["/bin/sh","-c","env"]
+      env: #单独配置环境变量
+        - name: SPECIAL_LEVEL_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: special.how
+              name: special-config
+        - name: SPECIAL_TYPE_KEY
+          valueFrom:
+            configMapKeyRef:
+              key: special.type
+              name: special-config
+      envFrom: #从配置中直接读取环境变量
+        - configMapRef:
+            name: env-config
+  restartPolicy: Never
