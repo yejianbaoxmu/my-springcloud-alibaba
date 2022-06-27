@@ -1,17 +1,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: order-deployment
+  name: gateway-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: order
+      app: gateway
   template: # 根据此模板创建Pod的副本
     metadata:
       labels: # Pod副本拥有的标签
-        app: order
+        app: gateway
     spec:
+      #nodeName: k8s-node-062
       volumes:
         - name: skywalking-agent
           emptyDir: { }
@@ -21,14 +22,13 @@ spec:
           volumeMounts:
             - name: skywalking-agent
               mountPath: /agent
-          command: [ "/bin/sh" ]
-          args: [ "-c", "cp -R /skywalking/agent/* /agent/" ]
-        - name: init-order
-          image: busybox
-          command: [ 'sh','-c','until nslookup storage-svc; do echo waiting for storage-svc; sleep 2;done;' ]
+          command:
+            - '/bin/sh'
+            - '-c'
+            - 'cp -R /skywalking/agent/* /agent/'
       containers:
-        - name: my-order
-          image: hub.anicert.cn/library/my-order:1.0.2
+        - name: my-gateway
+          image: hub.anicert.cn/library/my-gateway:1.0.0
           imagePullPolicy: IfNotPresent
           volumeMounts:
             - name: skywalking-agent
@@ -37,41 +37,56 @@ spec:
             - name: JAVA_TOOL_OPTIONS
               value: "-javaagent:/skywalking/agent/skywalking-agent.jar"
             - name: SW_AGENT_NAME
-              value: "order"
+              value: "gateway"
+          #env已经由env-storage.yml在k8s创建configMap了
           envFrom:
             - configMapRef:
                 name: nacos-config
             - configMapRef:
                 name: skywalking-config
           ports:
-            - containerPort: 8081
+            - containerPort: 8085
           readinessProbe:
             tcpSocket:
-              port: 8081
+              port: 8085
             initialDelaySeconds: 20
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 10
           livenessProbe:
             httpGet:
-              port: 8081
-              path: /order/status
-            initialDelaySeconds: 120
+              port: 8085
+              path: /gateway/status
+            initialDelaySeconds: 150
             periodSeconds: 60
             timeoutSeconds: 5
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: storage-svc
+  name: gateway-svc
 spec:
   type: ClusterIP
   selector:
-    app: order
+    app: gateway
   ports:
     - name: http
-      port: 8081
-      targetPort: 8081
+      port: 8085
+      targetPort: 8085
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nginx-test
+spec:
+  rules:
+    - host: 123.60.223.118
+      http:
+        paths:
+        - path: /
+          backend:
+            serviceName: gateway-svc
+            servicePort: 8085
 
 
 

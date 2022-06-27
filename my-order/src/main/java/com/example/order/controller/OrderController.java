@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.example.common.entity.Account;
 import com.example.common.entity.Storage;
 import com.example.common.view.Result;
+import com.example.order.service.OrderService;
 import com.example.order.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,10 +25,13 @@ public class OrderController {
     @Autowired
     private StorageService storageService;
 
+    @Autowired
+    private OrderService orderService;
+
     @RequestMapping("/status")
     public String status(){
         Result result = new Result(0,"状态正常",null);
-
+        orderService.status();
         return JSON.toJSONString(result);
     }
 

@@ -18,6 +18,13 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class StorageService {
 
+
+    public void status(){
+        System.out.println("storage状态status begin");
+
+        System.out.println("storage状态status success");
+    }
+
     @SentinelResource(value = "substract",blockHandler = "blockHandlerForSubstract",
             fallback = "failBackForSubstract")
     public void substract(Storage storage) throws BusinessException {
@@ -31,6 +38,7 @@ public class StorageService {
         }
         System.out.println("库存正常扣减substract success");
     }
+
 
     public void blockHandlerForSubstract(Storage storage, BlockException blockException)throws BusinessException{
         log.error(blockException.toString());

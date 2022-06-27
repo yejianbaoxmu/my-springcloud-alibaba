@@ -27,7 +27,7 @@ spring:
       - optional:nacos:gateway.yml
       - optional:nacos:gateway-db.yml
 server:
-  port: 8090
+  port: 8085
 feign:
   sentinel:
     enabled: true

@@ -27,6 +27,7 @@ public class StorageController {
 
     @GetMapping("/status")
     public String status(){
+        storageService.status();
         Result result = new Result(0,"状态正常",null);
         return JSON.toJSONString(result);
     }
